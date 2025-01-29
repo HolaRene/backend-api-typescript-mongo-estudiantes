@@ -6,6 +6,7 @@ import {
   obtenerNota,
   obtenerNotas,
 } from '../services/notas.service'
+import { verificarJWT } from '../utils/jwt.handle'
 
 const getNotas = async (req: Request, res: Response) => {
   try {
@@ -30,10 +31,13 @@ const getNotaEstudiante = async (req: Request, res: Response) => {
   }
 }
 
-const postNotas = async ({ body }: Request, res: Response) => {
+const postNotas = async ({ body, cookies }: Request, res: Response) => {
   try {
-    //  const crearNotaEstudiante = await
-    const nota = await crearNotas(body)
+    const token = cookies.access_token
+    const verfiID = verificarJWT(token)
+    const id = verfiID.decoded?.id
+    const cuerpo = { ...body, profesor: id }
+    const nota = await crearNotas(cuerpo)
     if (nota.error) {
       res
         .status(400)
@@ -46,15 +50,18 @@ const postNotas = async ({ body }: Request, res: Response) => {
   }
 }
 
-const putNotas = async ({ body, params }: Request, res: Response) => {
+const putNotas = async ({ body, params, cookies }: Request, res: Response) => {
   try {
     const { id } = params
-    const actNota = await actualizarNota(id, body)
+    const token = cookies.access_token
+    const verfiID = verificarJWT(token)
+    const profesorId = verfiID.decoded?.id
+    const cuerpo = { ...body, profesor: profesorId }
+    console.log(cuerpo)
+    const actNota = await actualizarNota(id, cuerpo)
 
     if (actNota.error) {
-      res
-        .status(404)
-        .json({ message: 'Nota no encontrada', error: actNota.error })
+      res.status(404).json({ error: actNota.error })
       return // No se continúa con la actualización si hay un error
     }
     res.status(200).json({
@@ -67,10 +74,13 @@ const putNotas = async ({ body, params }: Request, res: Response) => {
   }
 }
 
-const deleteNotas = async ({ params }: Request, res: Response) => {
+const deleteNotas = async ({ params, cookies }: Request, res: Response) => {
   try {
     const { id } = params
-    const notaEli = await eliminarNota(id)
+    const token = cookies.access_token
+    const verfiID = verificarJWT(token)
+    const profesorId = verfiID.decoded?.id
+    const notaEli = await eliminarNota(id, profesorId)
 
     if (notaEli.error) {
       res.status(400).json(notaEli.error)

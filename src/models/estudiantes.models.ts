@@ -27,6 +27,10 @@ const estudiantesSchema = new Schema<Estudiantes>(
       required: true,
     },
     description: { type: String, default: 'Este es un estudiante del NErp' },
+    profesorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Profesor',
+    },
   },
   {
     timestamps: true,

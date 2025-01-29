@@ -6,12 +6,13 @@ import cors from 'cors'
 
 const app: Application = express()
 
-app.use(
-  cors({
-    credentials: true,
-    origin: 'http://localhost:3000',
-  })
-)
+app.use(cors())
+// app.use(
+//   cors({
+//     credentials: true,
+//     origin: 'http://localhost:3000',
+//   })
+// )
 // Middlewares
 
 app.use(express.json()) // Asegúrate de incluir este middleware

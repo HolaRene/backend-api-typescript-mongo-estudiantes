@@ -9,6 +9,7 @@ const profesorSchema = new Schema<ProfesorRegistro>(
       minlength: 3, // Usar `minlength` en lugar de `min`
       maxlength: 30, // Usar `maxlength` en lugar de `max`
       trim: true,
+      unique: true,
     },
     materias: {
       type: [String],

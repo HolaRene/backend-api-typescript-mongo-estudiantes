@@ -1,16 +1,22 @@
 import { Estudiantes } from '../interface/estudiantes.interface'
 import estudianteModel from '../models/estudiantes.models'
+import profesorModel from '../models/profesor.models'
 
 const crearEstudiantes = async (estudiante: Estudiantes) => {
-  // código para crear estudiantes
-  const crearEstudiantes = await estudianteModel.create(estudiante)
-  if (!crearEstudiantes) return { error: 'Estudiante no encontrado' }
-  return {
-    nombre: crearEstudiantes?.nombre,
-    apellido: crearEstudiantes?.apellido,
-    grado: crearEstudiantes?.grado,
-    genero: crearEstudiantes?.sexo,
-    edad: crearEstudiantes?.edad,
+  try {
+    const profesorInfo = await profesorModel.findById(estudiante.profesorId)
+    if (!profesorInfo?.grado.includes(estudiante.grado)) {
+      return {
+        error:
+          'El profesor no puede crear un estudiante distinto del grado suyo',
+      }
+    }
+    // Crear el estudiante en la base de datos
+    const nuevoEstudiante = await estudianteModel.create(estudiante)
+    // Devolver el objeto completo del estudiante creado
+    return { nuevoEstudiante }
+  } catch (error) {
+    throw error
   }
 }
 
@@ -30,6 +36,8 @@ const obtenerEstudiante = async (id: string) => {
     grado: obtenerEstudiante?.grado,
     genero: obtenerEstudiante?.sexo,
     edad: obtenerEstudiante?.edad,
+    description: obtenerEstudiante?.description,
+    profesorId: obtenerEstudiante?.profesorId,
   }
 }
 
@@ -49,10 +57,32 @@ const eliminarEstudiante = async (id: string) => {
   return { nombre: eliminarEstudiante.nombre }
 }
 
+const obtenerEstudiantesPorProfesor = async (
+  profesorId: string | undefined
+) => {
+  // código para obtener estudiantes por profesor
+  const obtenerEstudiantes = await estudianteModel.find({
+    profesorId: profesorId,
+  })
+  if (!obtenerEstudiantes)
+    return { error: 'No hay estudiantes para este profesor' }
+  return obtenerEstudiantes
+}
+const obtenerEstudiantesPorGrado = async (profesorId: string | undefined) => {
+  // código para obtener estudiantes por profesor
+  const obtenerEstudiantes = await estudianteModel.find({
+    profesorId: profesorId,
+  })
+  if (!obtenerEstudiantes)
+    return { error: 'No hay estudiantes para este profesor' }
+  return obtenerEstudiantes
+}
+
 export {
   crearEstudiantes,
   obtenerEstudiantes,
   obtenerEstudiante,
   actualizarEstudiante,
   eliminarEstudiante,
+  obtenerEstudiantesPorProfesor,
 }

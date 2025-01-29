@@ -1,3 +1,5 @@
+import { Types } from 'mongoose'
+
 export interface Estudiantes {
   nombre: string
   apellido: string
@@ -5,4 +7,5 @@ export interface Estudiantes {
   grado: 'sexto' | 'cuarto' | 'quinto'
   description: string
   sexo: 'masculino' | 'femenino'
+  profesorId: Types.ObjectId
 }

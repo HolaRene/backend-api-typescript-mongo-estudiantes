@@ -54,12 +54,16 @@ const loginController = async ({ body }: Request, res: Response) => {
       return
     }
     res
-      .cookie('access_token', login.datos?.token, {
-        httpOnly: false, // token solo puede ser utilizado en el sitio web, solo en el servidor
-        secure: true,
-        sameSite: 'none',
-        maxAge: 3600000, // token expira en 1 hora
-      })
+      .cookie(
+        'access_token',
+        login.datos?.token
+        // , {
+        //   httpOnly: false, // token solo puede ser utilizado en el sitio web, solo en el servidor
+        //   secure: true,
+        //   sameSite: 'none',
+        //   maxAge: 3600000, // token expira en 1 hora
+        // }
+      )
       .json({ datos: login.datos })
   } catch (error) {
     res.status(500).json('Error interno del servidor')

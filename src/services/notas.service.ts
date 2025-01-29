@@ -32,35 +32,90 @@ const obtenerNota = async (id: string) => {
 }
 
 const crearNotas = async (datos: Notas) => {
-  // Implementación para crear notas en la base de datos
+  // Verifica si los datos contienen un estudiante y un profesor
+  if (!datos.profesor || !datos.estudiante) {
+    return { error: 'Falta el estudiante o el profesor' }
+  }
+
+  // Validar si el profesor existe
+  const profesor = await profesorModel.findById(datos.profesor)
+  if (!profesor) {
+    return { error: 'Profesor no encontrado' }
+  }
+
+  // Verificar si la materia está en el perfil del profesor
+  if (!profesor.materias.includes(datos.materia)) {
+    return {
+      error: `La materia "${datos.materia}" no está asociada al perfil del profesor`,
+    }
+  }
+
+  // Validar si el estudiante existe
+  const estudiante = await estudianteModel.findById(datos.estudiante)
+  if (!estudiante) {
+    return { error: `Estudiante no encontrado con ID: ${datos.estudiante}` }
+  }
+
+  // Verificar si ya existe una nota para el mismo estudiante, materia y profesor
+  const notaExistente = await notaModel.findOne({
+    profesor: datos.profesor,
+    estudiante: datos.estudiante,
+    materia: datos.materia,
+  })
+  if (notaExistente) {
+    return {
+      error:
+        'Ya existe una nota para este estudiante en esta materia con este profesor',
+    }
+  }
+
+  // Crear y guardar la nueva nota
   const nuevaNota = new notaModel(datos)
-  if (!nuevaNota.profesor && nuevaNota.estudiante)
-    return { error: 'No tiene estudiante o profesor' }
-  const profesorName = await profesorModel.findById(nuevaNota.profesor)
-  if (!profesorName) return { error: 'Profesor no encontrado' }
-  const estudianteNombre = await estudianteModel.findById(nuevaNota.estudiante)
-  if (!estudianteNombre) return { error: 'Estudiante no encontrado' }
-  // Guardar en la base de datos
-  const savedNota = await nuevaNota.save() // Asegúrate de guardar el documento
+  const savedNota = await nuevaNota.save()
 
   // Retornar la nota guardada
   return {
-    estudiante: `${profesorName.nombre} ${profesorName.apellido}`,
-    profesor: `${profesorName.nombre} ${profesorName.apellido}`,
+    estudiante: `${estudiante.nombre} ${estudiante.apellido}`,
+    profesor: `${profesor.nombre} ${profesor.apellido}`,
     materia: savedNota.materia,
     calificacion: savedNota.calificacion,
     _id: savedNota._id,
   }
 }
+
 const actualizarNota = async (id: string, data: Notas) => {
   const updNota = await notaModel.findByIdAndUpdate(id, data, { new: true })
-  if (!updNota) {
-    return { error: 'No se encontró la nota o el ID es incorrecto' }
+  const estudiante = await estudianteModel.findById({
+    _id: data.estudiante,
+  })
+  if (!estudiante)
+    return { error: 'Estudiante no encontrado', estudiante: estudiante }
+  const profesor = await profesorModel.findById({ _id: data.profesor })
+  if (!profesor) return { error: 'Profesor no encontrado', profesor: profesor }
+  if (estudiante.profesorId.toString() !== profesor?._id.toString()) {
+    return {
+      error: 'No tienes permiso para actualizar esta nota',
+    }
   }
+  if (!updNota) {
+    return {
+      error: `No se encontró la nota o el ID es incorrecto`,
+    }
+  }
+
   return { updNota }
 }
 
-const eliminarNota = async (id: string) => {
+const eliminarNota = async (id: string, profesorId: string | undefined) => {
+  const profesor = await profesorModel.findById(profesorId)
+  if (!profesor) return { error: 'Profesor no encontrado' }
+  const nota = await notaModel.findById(id)
+  if (!nota) return { error: 'No hay Nota' }
+  if (profesor?._id.toString() !== nota.profesor._id.toString()) {
+    return {
+      error: `No tienes permiso para eliminar esta nota ${profesor?._id} y ${nota.profesor}`,
+    }
+  }
   const resDelete = await notaModel.findByIdAndDelete(id)
   if (!resDelete) return { error: 'No hay tarea' }
   return { resDelete }
